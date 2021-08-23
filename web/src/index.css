@@ -51,7 +51,9 @@ code {
 .flex {
   display: flex;
 }
-
+.flex.fd-column {
+  flex-direction: column;
+}
 .flex.jc-sa {
   justify-content: space-around;
 }

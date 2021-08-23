@@ -41,3 +41,12 @@
     background-color: #d6d6d6;
   }
 }
+
+.chat-interface {
+  .chat-input-box {
+    height: 200px;
+    > * {
+      height: 100%;
+    }
+  }
+}
