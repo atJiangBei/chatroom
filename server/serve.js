@@ -11,8 +11,10 @@ io.on('connection', (client) => {
   arrIo.push(client)
   client.on('msg', (data) => {
     console.log(client.handshake.auth)
+	console.log(data)
+	const { to:{id}} = data;
     arrIo.forEach((s) => {
-      if (s !== client) {
+      if (s !== client && s.handshake.auth.id===id) {
         s.emit('msg', {
           ...data,
           from: client.handshake.auth,

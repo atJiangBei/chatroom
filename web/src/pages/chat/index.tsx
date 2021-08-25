@@ -16,6 +16,7 @@ const Chat = (props: any) => {
   const [userList, setUserList] = useState([])
   const [currentUser, setCurrentUser] = useState<any>()
   const [currentChat, setCurrentChat] = useState<any>()
+  const [chatText, setChatText] = useState<string>()
   useEffect(() => {
     if (userInfo) {
       queryAllUser(userInfo)
@@ -34,9 +35,12 @@ const Chat = (props: any) => {
     })
     socket.on('msg', (res: any) => {
       console.log(res)
-      console.log(currentChat)
       const { id } = res.from
-      chatData[id].push(res.message)
+      chatData[id].push({
+        type: 'he',
+        message: res.message,
+        ...res.from
+      })
       setCurrentChat([...chatData[id]])
     })
   }, [])
@@ -58,10 +62,16 @@ const Chat = (props: any) => {
   }
   const onPressEnter = function(e: any) {
     const value = e.target.value
+    setChatText('')
     socket.emit('msg', {
       type: 'fellow_netizen',
       to: currentUser,
       message: value
+    })
+    currentChat.push({
+      type: 'self',
+      message: value,
+      ...userInfo
     })
   }
   return (
@@ -89,16 +99,39 @@ const Chat = (props: any) => {
         </div>
         {currentUser && (
           <div className="flex-1 flex chat-interface fd-column">
-            <div className="flex-1">
-              <ul>
-                {currentChat.map((chat: any) => {
-                  return <li key={chat}>{chat}</li>
-                })}
-              </ul>
+            <div className="flex-1  chat-list">
+              <div>
+                <ul>
+                  {currentChat.map((chat: any, index: number) => {
+                    return (
+                      <li key={index + ''}>
+                        {chat.type === 'self' && (
+                          <div className="self">
+                            <span className="chat-item">{chat.message}</span>
+                            <strong className="head-portrait">
+                              {chat.name}
+                            </strong>
+                          </div>
+                        )}
+                        {chat.type === 'he' && (
+                          <div className="he">
+                            <strong className="head-portrait">
+                              {chat.name}
+                            </strong>
+                            <span className="chat-item">{chat.message}</span>
+                          </div>
+                        )}
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
             </div>
             <div className="chat-input-box padding-default">
               <Input.TextArea
                 placeholder="按enter+ctrl发送"
+                value={chatText}
+                onChange={e => setChatText(e.target.value)}
                 onPressEnter={onPressEnter}
               />
             </div>
