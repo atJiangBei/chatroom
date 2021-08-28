@@ -1,4 +1,3 @@
-import React from 'react';
 import { HashRouter, Route, Redirect, Switch } from 'react-router-dom';
 import LoginComponent from '../pages/login/index'
 import ChatComponent from '../pages/chat'

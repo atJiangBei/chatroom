@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react'
+import React, { useRef } from 'react'
 import { Form, Input, Button } from 'antd'
 import {
   UserOutlined,
@@ -21,9 +21,6 @@ const Login = (props: any) => {
       props.history.push('/chat')
     })
   }
-  useEffect(() => {
-
-  }, [])
   const onFinishFailed = (errorInfo: any) => {
     console.log('Failed:', errorInfo)
   }

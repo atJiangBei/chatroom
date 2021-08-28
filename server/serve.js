@@ -10,15 +10,27 @@ const io = require('socket.io')(server, { cors: true })
 io.on('connection', (client) => {
   arrIo.push(client)
   client.on('msg', (data) => {
-    console.log(client.handshake.auth)
-	console.log(data)
-	const { to:{id}} = data;
+    const fromAuth = client.handshake.auth
+    console.log(data)
+    const {
+      to: { id },
+      type,
+    } = data
     arrIo.forEach((s) => {
-      if (s !== client && s.handshake.auth.id===id) {
-        s.emit('msg', {
-          ...data,
-          from: client.handshake.auth,
-        })
+      if (s !== client) {
+        if (type === 'personal') {
+          if (s.handshake.auth.id === id) {
+            s.emit('msg', {
+              ...data,
+              from: fromAuth,
+            })
+          }
+        } else if (type === 'group') {
+          s.emit('msg', {
+            ...data,
+            from: fromAuth,
+          })
+        }
       }
     })
   })

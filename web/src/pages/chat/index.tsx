@@ -1,30 +1,34 @@
-import React, { useEffect, useState } from 'react'
-
+import { useEffect, useState } from 'react'
 import './index.scss'
+import io from 'socket.io-client'
 import request from '../../utils/request'
+
+//组件
 import ChatWindow from '../../components/chat'
 import User from '../../components/user'
-import io from 'socket.io-client'
+import FriendsList from '../../components/friends-list'
 
 const wsPath = `ws://${process.env.REACT_APP_WS}`
-const userInfoStr = localStorage.getItem('userInfo')
+
 
 let userInfo: any = {}
 let socket: any = null
 const chatData: any = {}
 
 
-
 const Chat = (props: any) => {
+  const userInfoStr = localStorage.getItem('userInfo')
   if (userInfoStr) {
     userInfo = JSON.parse(userInfoStr)
   } else {
     props.history.push('/login')
   }
-  const [userList, setUserList] = useState([])
-  const [currentUser, setCurrentUser] = useState < any > ()
-  const [currentChat, setCurrentChat] = useState < any > ()
-  const [chatText, setChatText] = useState < string > ()
+  //聊天好友列表
+  const [friendList, setFriendList] = useState([])
+  //当前聊天的朋友或者群聊
+  const [chattingFriend, changeChattingFriend] = useState < any > ()
+  //当前聊天窗口的聊天信息
+  const [currentChat, updateCurrentChat] = useState < Array < Object > > ([])
   useEffect(() => {
     if (userInfo) {
       queryAllUser(userInfo)
@@ -42,14 +46,20 @@ const Chat = (props: any) => {
       console.log('连接成功')
     })
     socket.on('msg', (res: any) => {
-      console.log(res)
-      const { id } = res.from
+      const { type, from, to } = res;
+      let id = '';
+      if (type === 'group') {
+        id = to.id
+      }
+      if (type === 'personal') {
+        id = from.id
+      }
       chatData[id].push({
-        type: 'he',
+        source: 'he',
         message: res.message,
         ...res.from
       })
-      setCurrentChat([...chatData[id]])
+      updateCurrentChat([...chatData[id]])
     })
   }, [])
   const queryAllUser = (userInfo = {}) => {
@@ -57,57 +67,40 @@ const Chat = (props: any) => {
       .GET('/chat/queryAllUser', {
         params: userInfo
       })
-      .then((res: any) => {
-        setUserList(res)
-        res.forEach((item: any) => {
+      .then((friends: any) => {
+        setFriendList(friends)
+        friends.forEach((item: any) => {
           chatData[item.id] = []
         })
+        friends[0] && toggleFriend(friends[0])
       })
   }
-  const toggleUser = (user: any) => {
-    setCurrentUser(user)
-    setCurrentChat(chatData[user.id])
+  const toggleFriend = (user: any) => {
+    changeChattingFriend(user)
+    updateCurrentChat(chatData[user.id])
   }
-  const onPressEnter = function (e: any) {
-    const value = e.target.value
-    if (e.ctrlKey && e.keyCode === 13) {
-      setChatText('')
-      socket.emit('msg', {
-        type: 'fellow_netizen',
-        to: currentUser,
-        message: value
-      })
-      currentChat.push({
-        type: 'self',
-        message: value,
-        ...userInfo
-      })
+  const onEnter = function (value: string) {
+    const { type } = chattingFriend;
+    socket.emit('msg', {
+      type: type,//个人
+      to: chattingFriend,
+      message: value
+    })
+    const info = {
+      source: 'self',
+      message: value,
+      ...userInfo
     }
-
+    currentChat.push(info)
+    updateCurrentChat([...currentChat])
   }
   return (
     <div className="chat-container">
       <div className="chat-content flex">
         <User userInfo={userInfo}></User>
-        <div className="user-list">
-          <ul>
-            {userList.length > 0 &&
-              userList.map((user: any) => {
-                const cs = currentUser && currentUser.id === user.id
-                return (
-                  <li
-                    key={user.id}
-                    className={cs ? 'active' : ''}
-                    onClick={() => toggleUser(user)}
-                  >
-                    {user.name}
-                  </li>
-                )
-              })}
-          </ul>
-        </div>
-        {currentUser && (
-          <ChatWindow chatList={currentChat} onPressEnter={onPressEnter}></ChatWindow>
+        <FriendsList friendsList={friendList} chattingFriend={chattingFriend} toggleFriend={toggleFriend}></FriendsList>
+        {chattingFriend && (
+          <ChatWindow chatList={currentChat} user={chattingFriend} onEnter={onEnter}></ChatWindow>
         )}
       </div>
     </div>
