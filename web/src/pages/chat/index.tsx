@@ -8,11 +8,25 @@ import ChatWindow from '../../components/chat'
 import User from '../../components/user'
 import FriendsList from '../../components/friends-list'
 
+//类型
+
+import { UserInfo, ChatData } from './type'
+
 const wsPath = `ws://${process.env.REACT_APP_WS}`
 
-let userInfo: any = {}
+let userInfo: UserInfo = {
+  createTime: 0,
+  id: '',
+  name: '',
+  type: ''
+}
 let socket: any = null
-let currentFriend: any = null
+let currentFriend = {
+  createTime: 0,
+  id: '',
+  name: '',
+  type: ''
+}
 const chatData: any = {}
 
 const Chat = (props: any) => {
@@ -25,9 +39,9 @@ const Chat = (props: any) => {
   //聊天好友列表
   const [friendList, setFriendList] = useState([])
   //当前聊天的朋友或者群聊
-  const [chattingFriend, changeChattingFriend] = useState<any>()
+  const [chattingFriend, changeChattingFriend] = useState < any > ()
   //当前聊天窗口的聊天信息
-  const [currentChat, updateCurrentChat] = useState<Array<Object>>([])
+  const [currentChat, updateCurrentChat] = useState < Array < Object >> ([])
 
   useEffect(() => {
     if (userInfo) {
@@ -71,7 +85,7 @@ const Chat = (props: any) => {
       })
       .then((friends: any) => {
         setFriendList(friends)
-        friends.forEach((item: any) => {
+        friends.forEach((item: UserInfo) => {
           chatData[item.id] = []
         })
         friends[0] && toggleFriend(friends[0])
@@ -82,7 +96,7 @@ const Chat = (props: any) => {
     updateCurrentChat(chatData[user.id])
     currentFriend = user
   }
-  const onEnter = function(value: string) {
+  const onEnter = function (value: string) {
     const { type, id } = chattingFriend
     socket.emit('msg', {
       type: type, //个人
